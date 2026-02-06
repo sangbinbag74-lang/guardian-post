@@ -1,14 +1,28 @@
 import { AnalysisResult, AiJournalist } from "./types";
 import OpenAI from "openai";
+import fs from "fs";
+import path from "path";
 
 /**
  * AI Journalist Service Implementation
  * 
  * Supports both Mock mode (for development/demo) and Real mode (using OpenAI API).
  * Mode is determined by process.env.USE_MOCK_DATA or presence of OPENAI_API_KEY.
+ * 
+ * Features:
+ * - Persistent File-based Cache (data/ai-cache.json)
+ * - Auto-Translation support (via cache override in news service)
+ * - 4s Timeout Dead Switch to prevent hanging
  */
 export class HybridAiJournalist implements AiJournalist {
     private openai: OpenAI | null = null;
+
+    // Persistent Cache Path
+    private cachePath = path.join(process.cwd(), 'data', 'ai-cache.json');
+
+    // In-memory mirror for speed
+    private static cache = new Map<string, AnalysisResult>();
+    private static isCacheLoaded = false;
 
     constructor() {
         const apiKey = process.env.OPENAI_API_KEY;
@@ -20,10 +34,43 @@ export class HybridAiJournalist implements AiJournalist {
                 apiKey: apiKey,
             });
         }
+
+        // Load cache from disk immediately
+        this.loadCacheFromDisk();
     }
 
-    // In-memory cache to prevent redundant API calls
-    private static cache = new Map<string, AnalysisResult>();
+    private loadCacheFromDisk() {
+        if (HybridAiJournalist.isCacheLoaded) return;
+
+        try {
+            // Ensure data directory exists
+            const dir = path.dirname(this.cachePath);
+            if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+            }
+
+            if (fs.existsSync(this.cachePath)) {
+                const data = fs.readFileSync(this.cachePath, 'utf-8');
+                const json = JSON.parse(data);
+                Object.entries(json).forEach(([key, val]) => {
+                    HybridAiJournalist.cache.set(key, val as AnalysisResult);
+                });
+                console.log(`[AI] Loaded ${HybridAiJournalist.cache.size} items from persistent cache.`);
+            }
+            HybridAiJournalist.isCacheLoaded = true;
+        } catch (error) {
+            console.error("[AI] Failed to load cache from disk:", error);
+        }
+    }
+
+    private saveCacheToDisk() {
+        try {
+            const obj = Object.fromEntries(HybridAiJournalist.cache);
+            fs.writeFileSync(this.cachePath, JSON.stringify(obj, null, 2), 'utf-8');
+        } catch (error) {
+            console.error("[AI] Failed to save cache to disk:", error);
+        }
+    }
 
     // Public accessor for cache to allow updating list properties (e.g. Translate Titles)
     public getCachedResult(newsId: string): AnalysisResult | undefined {
@@ -31,9 +78,9 @@ export class HybridAiJournalist implements AiJournalist {
     }
 
     async analyze(newsId: string, content: string): Promise<AnalysisResult> {
-        // 0. Check Cache First
+        // 0. Check Cache First (In-Memory Access -> Very Fast)
         if (HybridAiJournalist.cache.has(newsId)) {
-            console.log(`[AI] Cache HIT for key: ${newsId}`);
+            // console.log(`[AI] Persistent Cache HIT for key: ${newsId}`);
             return HybridAiJournalist.cache.get(newsId)!;
         }
 
@@ -41,8 +88,11 @@ export class HybridAiJournalist implements AiJournalist {
         if (!this.openai) {
             console.log("[AI] Running in MOCK mode (No API Key or USE_MOCK_DATA=true)");
             const mockResult = await this.getMockResult();
-            // Cache the mock result too
+
+            // Cache and Persist
             HybridAiJournalist.cache.set(newsId, mockResult);
+            this.saveCacheToDisk();
+
             return mockResult;
         }
 
@@ -103,14 +153,21 @@ Analyze the following news content:
             // Add timestamp
             if (!result.analyzedAt) result.analyzedAt = new Date().toISOString();
 
-            // Store in Cache
+            // Store in Cache and Persist
             HybridAiJournalist.cache.set(newsId, result);
+            this.saveCacheToDisk();
 
             return result;
 
         } catch (error) {
             console.error("[AI] API Error, falling back to Mock:", error);
-            return this.getMockResult();
+            const mock = await this.getMockResult();
+
+            // Cache and Persist Mock
+            HybridAiJournalist.cache.set(newsId, mock);
+            this.saveCacheToDisk();
+
+            return mock;
         }
     }
 
