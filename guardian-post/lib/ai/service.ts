@@ -1,9 +1,87 @@
 import { AnalysisResult, AiJournalist } from "./types";
+import OpenAI from "openai";
 
-export class MockAiJournalist implements AiJournalist {
+/**
+ * AI Journalist Service Implementation
+ * 
+ * Supports both Mock mode (for development/demo) and Real mode (using OpenAI API).
+ * Mode is determined by process.env.USE_MOCK_DATA or presence of OPENAI_API_KEY.
+ */
+export class HybridAiJournalist implements AiJournalist {
+    private openai: OpenAI | null = null;
+
+    constructor() {
+        const apiKey = process.env.OPENAI_API_KEY;
+        const useMock = process.env.USE_MOCK_DATA === 'true';
+
+        // Initialize OpenAI if API Key exists and Mock mode is not strictly enforced
+        if (apiKey && !useMock) {
+            this.openai = new OpenAI({
+                apiKey: apiKey,
+            });
+        }
+    }
+
     async analyze(newsId: string, content: string): Promise<AnalysisResult> {
+        // 1. Fallback to Mock if no OpenAI instance
+        if (!this.openai) {
+            console.log("[AI] Running in MOCK mode (No API Key or USE_MOCK_DATA=true)");
+            return this.getMockResult();
+        }
+
+        // 2. Real AI Analysis
+        try {
+            console.log(`[AI] Analyzing news ${newsId} using OpenAI...`);
+
+            const completion = await this.openai.chat.completions.create({
+                model: process.env.OPENAI_MODEL || "gpt-4-turbo-preview",
+                messages: [
+                    {
+                        role: "system",
+                        content: `
+You are an expert journalist AI for 'Guardian Post', a defense & economy news platform.
+Your task is to analyze raw news content and generate a deep analytical report in JSON format.
+
+Output JSON Structure:
+{
+  "title": "A professional, catchy headline summarizing the analysis",
+  "summary": "A 2-3 sentence executive summary",
+  "content": "Full analytical article in Markdown format. Use H2, H3, bullet points. Focus on strategic implications.",
+  "implications": ["Key implication 1", "Key implication 2", "Key implication 3"],
+  "suggestedVisuals": [
+    { "type": "chart" | "image", "description": "Description of the visual", "prompt": "AI image generation prompt" }
+  ],
+  "reliability": 95 (Integer between 80-100 based on news quality)
+}
+
+Analyze the following news content:
+`
+                    },
+                    {
+                        role: "user",
+                        content: content
+                    }
+                ],
+                response_format: { type: "json_object" }
+            });
+
+            const resultString = completion.choices[0].message.content || "{}";
+            const result = JSON.parse(resultString) as AnalysisResult;
+
+            // Add timestamp
+            result.analyzedAt = new Date().toISOString();
+
+            return result;
+
+        } catch (error) {
+            console.error("[AI] API Error, falling back to Mock:", error);
+            return this.getMockResult();
+        }
+    }
+
+    private async getMockResult(): Promise<AnalysisResult> {
         // Simulate deep analysis delay (2-3 seconds)
-        await new Promise((resolve) => setTimeout(resolve, 2500));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
 
         return {
             title: "익산시 국방 AI 센터 유치: K-Defense의 전략적 요충지 부상",
@@ -47,4 +125,4 @@ export class MockAiJournalist implements AiJournalist {
     }
 }
 
-export const aiJournalist = new MockAiJournalist();
+export const aiJournalist = new HybridAiJournalist();

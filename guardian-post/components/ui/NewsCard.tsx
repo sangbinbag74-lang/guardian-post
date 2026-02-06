@@ -32,24 +32,21 @@ export function NewsCard({ title, summary, source, date, imageUrl, reliability }
                         <span className="text-4xl font-bold opacity-20">GP</span>
                     </div>
                 )}
-                <div className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium text-foreground">
-                    {source}
-                </div>
             </div>
 
             <div className="p-4">
-                <div className="flex justify-between items-center mb-2">
+                <div className="flex justify-between items-start mb-2">
+                    <span className="text-xs font-semibold text-primary/80 bg-primary/10 px-2 py-1 rounded">
+                        {source}
+                    </span>
                     <span className="text-xs text-muted-foreground">{date}</span>
-                    {reliability && (
-                        <span className={`text-xs font-bold ${reliability > 80 ? 'text-green-500' : 'text-yellow-500'}`}>
-                            신뢰도 {reliability}%
-                        </span>
-                    )}
                 </div>
+                
                 <h3 className="text-lg font-bold mb-2 line-clamp-2 leading-tight group-hover:text-primary transition-colors">
                     {title}
                 </h3>
-                <p className="text-sm text-muted-foreground line-clamp-3">
+                
+                <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
                     {summary}
                 </p>
             </div>

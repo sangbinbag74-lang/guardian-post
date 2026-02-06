@@ -30,9 +30,6 @@ export function AnalysisModal({ isOpen, onClose, result }: AnalysisModalProps) {
                         <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                             <Brain className="w-3 h-3 mr-1" /> AI Deep Analysis
                         </Badge>
-                        <span className="text-xs text-muted-foreground">
-                            신뢰도 {result.reliability}%
-                        </span>
                     </div>
                     <DialogTitle className="text-xl leading-tight text-left">
                         {result.title}

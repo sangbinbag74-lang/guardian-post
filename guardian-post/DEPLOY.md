@@ -35,6 +35,14 @@ Git 설정이 복잡하다면, 터미널 명령어로 바로 배포할 수 있�
    - 약 1~2분 후 `Production: https://guardian-post-xxxx.vercel.app` 형태의 주소가 나옵니다.
    - 해당 주소를 클릭하여 접속하면 됩니다.
 
+### (중요) 환경 변수 설정
+AI 기능을 실제로 작동시키려면 Vercel 대시보드에서 환경 변수를 설정해야 합니다.
+1. Vercel 대시보드 -> 해당 프로젝트 -> **Settings** -> **Environment Variables**
+2. 다음 키-값을 추가합니다:
+   - Key: `OPENAI_API_KEY`
+   - Value: `sk-xxxx` (본인의 OpenAI 키)
+3. 설정 후 **Redeploy**(재배포) 해야 적용됩니다.
+
 ---
 
 ## 방법 2: Git 및 GitHub 사용 (권장)
@@ -51,7 +59,7 @@ Git 설정이 복잡하다면, 터미널 명령어로 바로 배포할 수 있�
    git add .
    git commit -m "Initial commit"
    git branch -M main
-   git remote add origin https://github.com/[사용자ID]/guardian-post.git
+   git remote add origin https://github.com/sangbinbag74-lang/guardian-post.git
    git push -u origin main
    ```
 
@@ -59,6 +67,26 @@ Git 설정이 복잡하다면, 터미널 명령어로 바로 배포할 수 있�
    - [vercel.com/new](https://vercel.com/new) 접속
    - `Import Git Repository`에서 방금 만든 저장소 선택
    - `Deploy` 버튼 클릭
+
+---
+
+## 🔄 업데이트 및 재배포 방법
+
+코드를 수정하거나 새로운 기능을 추가했을 때 본 서버(Live)에 반영하는 방법입니다.
+
+### 방법 1: Vercel CLI 사용 (가장 빠름)
+터미널에서 다음 명령어를 입력하면 즉시 덮어씌워져 업데이트됩니다.
+```bash
+npx vercel --prod
+```
+
+### 방법 2: Git 사용 (자동 배포)
+코드를 수정하고 저장한 뒤, 다음 명령어를 입력하면 Vercel이 감지하여 자동으로 재배포합니다.
+```bash
+git add .
+git commit -m "업데이트 내용 작성"
+git push
+```
 
 ---
 

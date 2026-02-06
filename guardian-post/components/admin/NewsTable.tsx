@@ -64,7 +64,6 @@ export function NewsTable({ initialNews }: NewsTableProps) {
                             <TableHead className="w-[100px]">상태</TableHead>
                             <TableHead>제목</TableHead>
                             <TableHead className="w-[150px]">출처</TableHead>
-                            <TableHead className="w-[100px]">신뢰도</TableHead>
                             <TableHead className="w-[150px]">게시일</TableHead>
                             <TableHead className="w-[150px]">액션</TableHead>
                         </TableRow>
@@ -94,11 +93,6 @@ export function NewsTable({ initialNews }: NewsTableProps) {
                                     </div>
                                 </TableCell>
                                 <TableCell>{item.source}</TableCell>
-                                <TableCell>
-                                    <span className={`font-bold ${item.reliability >= 80 ? 'text-green-600' : 'text-yellow-600'}`}>
-                                        {item.reliability}%
-                                    </span>
-                                </TableCell>
                                 <TableCell className="text-muted-foreground text-sm">
                                     {format(new Date(item.publishedAt), 'yyyy-MM-dd')}
                                 </TableCell>
