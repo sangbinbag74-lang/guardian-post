@@ -22,11 +22,23 @@ export class HybridAiJournalist implements AiJournalist {
         }
     }
 
+    // In-memory cache to prevent redundant API calls
+    private static cache = new Map<string, AnalysisResult>();
+
     async analyze(newsId: string, content: string): Promise<AnalysisResult> {
+        // 0. Check Cache First
+        if (HybridAiJournalist.cache.has(newsId)) {
+            console.log(`[AI] Cache HIT for key: ${newsId}`);
+            return HybridAiJournalist.cache.get(newsId)!;
+        }
+
         // 1. Fallback to Mock if no OpenAI instance
         if (!this.openai) {
             console.log("[AI] Running in MOCK mode (No API Key or USE_MOCK_DATA=true)");
-            return this.getMockResult();
+            const mockResult = await this.getMockResult();
+            // Cache the mock result too
+            HybridAiJournalist.cache.set(newsId, mockResult);
+            return mockResult;
         }
 
         // 2. Real AI Analysis
@@ -41,13 +53,14 @@ export class HybridAiJournalist implements AiJournalist {
                         content: `
 You are an expert journalist AI for 'Guardian Post', a defense & economy news platform.
 Your task is to analyze raw news content and generate a deep analytical report in JSON format.
+(Output must be in Korean language)
 
 Output JSON Structure:
 {
-  "title": "A professional, catchy headline summarizing the analysis",
-  "summary": "A 2-3 sentence executive summary",
-  "content": "Full analytical article in Markdown format. Use H2, H3, bullet points. Focus on strategic implications.",
-  "implications": ["Key implication 1", "Key implication 2", "Key implication 3"],
+  "title": "A professional, catchy headline summarizing the analysis (Korean)",
+  "summary": "A 2-3 sentence executive summary (Korean)",
+  "content": "Full analytical article in Markdown format. Use H2, H3, bullet points. Focus on strategic implications. (Korean)",
+  "implications": ["Key implication 1", "Key implication 2", "Key implication 3"] (Korean),
   "suggestedVisuals": [
     { "type": "chart" | "image", "description": "Description of the visual", "prompt": "AI image generation prompt" }
   ],
@@ -70,6 +83,9 @@ Analyze the following news content:
 
             // Add timestamp
             result.analyzedAt = new Date().toISOString();
+
+            // Store in Cache
+            HybridAiJournalist.cache.set(newsId, result);
 
             return result;
 

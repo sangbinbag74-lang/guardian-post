@@ -84,10 +84,18 @@ const FALLBACK_IMAGES: Record<string, string> = {
   "Default": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&q=80&w=800" // Generic News
 };
 
+import { createHash } from "crypto";
+
 // 아이템 가공 헬퍼 함수
 function processFeedItem(item: any, keyword: string, region: string): NewsItem {
   const imgMatch = item.content?.match(/<img[^>]+src="([^">]+)"/);
   const pubDate = item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString();
+
+  // Deterministic ID Generation
+  // Use link or guid to generate a stable hash ID. 
+  // This ensures that the same article always gets the same ID, fixing Broken Link issues.
+  const uniqueKey = item.link || item.guid || item.title;
+  const id = createHash('sha256').update(uniqueKey).digest('hex').substring(0, 16);
 
   // Fallback Image Selection Logic (High Quality Priority)
   // We prioritize high-quality Unsplash images based on keywords to ensure premium look.
@@ -101,7 +109,7 @@ function processFeedItem(item: any, keyword: string, region: string): NewsItem {
   else thumbnailUrl = imgMatch ? imgMatch[1] : FALLBACK_IMAGES["Default"]; // Only use RSS image if no keyword match
 
   return {
-    id: item.guid || item.link || Math.random().toString(),
+    id: id,
     title: item.title || "No Title",
     summary: item.contentSnippet?.slice(0, 150) + "..." || "No Summary",
     originalUrl: item.link || "#",
