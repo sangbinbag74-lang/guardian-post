@@ -1,5 +1,6 @@
 import { NewsItem, NewsStats } from "./types";
 import Parser from "rss-parser";
+import { aiJournalist } from "../ai/service";
 
 const parser = new Parser();
 
@@ -63,9 +64,27 @@ export async function getNewsList(): Promise<NewsItem[]> {
     // 중복 제거 (제목 기준) 및 최신순 정렬
     const uniqueNews = Array.from(new Map(allNews.map(item => [item.title, item])).values());
 
-    return uniqueNews.sort((a, b) =>
+    const sortedNews = uniqueNews.sort((a, b) =>
       new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
     );
+
+    // [Pre-analysis] Analyze Top 2 News items in parallel
+    // This ensures that when the user clicks the Hero or Top Featured news,
+    // the report is ALREADY generated in the cache.
+    // We do this concurrently to minimize impact on page load time (max 2-3s delay which is handled by loading.tsx)
+    const topItems = sortedNews.slice(0, 2);
+    if (topItems.length > 0) {
+      // console.log("Starting pre-analysis for top items...");
+      await Promise.all(
+        topItems.map(item =>
+          aiJournalist.analyze(item.id, `${item.title}\n${item.summary}`)
+            .catch(err => console.error(`Pre-analysis failed for ${item.id}:`, err))
+        )
+      );
+      // console.log("Pre-analysis complete.");
+    }
+
+    return sortedNews;
 
   } catch (error) {
     console.error("News Fetch Error:", error);
