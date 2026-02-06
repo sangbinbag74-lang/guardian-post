@@ -25,6 +25,11 @@ export class HybridAiJournalist implements AiJournalist {
     // In-memory cache to prevent redundant API calls
     private static cache = new Map<string, AnalysisResult>();
 
+    // Public accessor for cache to allow updating list properties (e.g. Translate Titles)
+    public getCachedResult(newsId: string): AnalysisResult | undefined {
+        return HybridAiJournalist.cache.get(newsId);
+    }
+
     async analyze(newsId: string, content: string): Promise<AnalysisResult> {
         // 0. Check Cache First
         if (HybridAiJournalist.cache.has(newsId)) {
@@ -45,12 +50,14 @@ export class HybridAiJournalist implements AiJournalist {
         try {
             console.log(`[AI] Analyzing news ${newsId} using OpenAI...`);
 
-            const completion = await this.openai.chat.completions.create({
-                model: process.env.OPENAI_MODEL || "gpt-4-turbo-preview",
-                messages: [
-                    {
-                        role: "system",
-                        content: `
+            // Define the AI task
+            const aiTask = async () => {
+                const completion = await this.openai!.chat.completions.create({
+                    model: process.env.OPENAI_MODEL || "gpt-4-turbo-preview",
+                    messages: [
+                        {
+                            role: "system",
+                            content: `
 You are an expert journalist AI for 'Guardian Post', a defense & economy news platform.
 Your task is to analyze raw news content and generate a deep analytical report in JSON format.
 (Output must be in Korean language)
@@ -69,20 +76,32 @@ Output JSON Structure:
 
 Analyze the following news content:
 `
-                    },
-                    {
-                        role: "user",
-                        content: content
-                    }
-                ],
-                response_format: { type: "json_object" }
+                        },
+                        {
+                            role: "user",
+                            content: content
+                        }
+                    ],
+                    response_format: { type: "json_object" }
+                });
+
+                const resultString = completion.choices[0].message.content || "{}";
+                return JSON.parse(resultString) as AnalysisResult;
+            };
+
+            // Implement Timeout Race (4000ms limit)
+            // If AI is slow (or hangs), we immediately fallback to Mock to prevent user frustration.
+            const timeoutPromise = new Promise<AnalysisResult>((resolve) => {
+                setTimeout(async () => {
+                    console.warn(`[AI] Analysis timed out for ${newsId}. Returning fallback.`);
+                    resolve(await this.getMockResult());
+                }, 4000);
             });
 
-            const resultString = completion.choices[0].message.content || "{}";
-            const result = JSON.parse(resultString) as AnalysisResult;
+            const result = await Promise.race([aiTask(), timeoutPromise]);
 
             // Add timestamp
-            result.analyzedAt = new Date().toISOString();
+            if (!result.analyzedAt) result.analyzedAt = new Date().toISOString();
 
             // Store in Cache
             HybridAiJournalist.cache.set(newsId, result);
