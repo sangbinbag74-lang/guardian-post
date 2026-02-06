@@ -68,20 +68,19 @@ export async function getNewsList(): Promise<NewsItem[]> {
       new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
     );
 
-    // [Pre-analysis] Analyze Top 2 News items in parallel
-    // This ensures that when the user clicks the Hero or Top Featured news,
-    // the report is ALREADY generated in the cache.
-    // We do this concurrently to minimize impact on page load time (max 2-3s delay which is handled by loading.tsx)
-    const topItems = sortedNews.slice(0, 2);
-    if (topItems.length > 0) {
-      // console.log("Starting pre-analysis for top items...");
+    // [Pre-analysis] Analyze ALL News items in parallel
+    // As per user request: "Analyze everything beforehand so the user never waits."
+    // This loads the cache for every single item fetched from RSS.
+    // Since we rely on in-memory caching, subsequent refreshes will be instant.
+    if (sortedNews.length > 0) {
+      // console.log(`Starting pre-analysis for all ${sortedNews.length} items...`);
       await Promise.all(
-        topItems.map(item =>
+        sortedNews.map(item =>
           aiJournalist.analyze(item.id, `${item.title}\n${item.summary}`)
             .catch(err => console.error(`Pre-analysis failed for ${item.id}:`, err))
         )
       );
-      // console.log("Pre-analysis complete.");
+      // console.log("Pre-analysis for all items complete.");
     }
 
     return sortedNews;

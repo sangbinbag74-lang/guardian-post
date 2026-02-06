@@ -1,5 +1,6 @@
 import { getNewsList } from "@/lib/news/service";
 import { aiJournalist } from "@/lib/ai/service";
+import ReactMarkdown from 'react-markdown';
 import { format } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
@@ -128,8 +129,8 @@ export default async function NewsDetailPage({ params }: PageProps) {
                             심층 분석 리포트
                         </h3>
                         {/* Markdown Content Rendering would go here, providing simple text for now */}
-                        <div className="whitespace-pre-wrap leading-relaxed text-muted-foreground">
-                            {analysis.content}
+                        <div className="prose prose-lg dark:prose-invert max-w-none text-muted-foreground">
+                            <ReactMarkdown>{analysis.content}</ReactMarkdown>
                         </div>
                     </div>
                 </section>
