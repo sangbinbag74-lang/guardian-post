@@ -82,24 +82,29 @@ export default async function NewsDetailPage({ params }: PageProps) {
                 </header>
 
                 {/* AI Insight Dashboard */}
-                <section className="mb-12 space-y-8">
-                    {/* 1. Key Takeaways */}
-                    <div className="bg-muted/30 rounded-xl p-6 border border-border/50">
-                        <h3 className="text-lg font-bold mb-4 flex items-center">
-                            <Brain className="w-5 h-5 mr-2 text-primary" />
-                            AI 핵심 요약
+                <section className="mb-12 space-y-10">
+
+                    {/* 1. Executive Summary (Key Takeaways) - MOVED TO TOP */}
+                    <div className="bg-muted/30 rounded-xl p-6 border border-border/50 shadow-sm">
+                        <h3 className="text-lg font-bold mb-4 flex items-center text-primary">
+                            <Brain className="w-5 h-5 mr-2" />
+                            AI 핵심 요약 (Executive Summary)
                         </h3>
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             <div className="flex items-start">
-                                <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
-                                <p className="text-foreground/90 leading-relaxed font-medium">{analysis.summary}</p>
+                                <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 mt-1 flex-shrink-0" />
+                                <p className="text-lg text-foreground/90 leading-relaxed font-medium">
+                                    {analysis.summary}
+                                </p>
                             </div>
-                            {analysis.implications?.map((imp, idx) => (
-                                <div key={idx} className="flex items-start">
-                                    <CheckCircle2 className="w-5 h-5 text-primary/60 mr-3 mt-0.5 flex-shrink-0" />
-                                    <p className="text-muted-foreground leading-relaxed">{imp}</p>
+                            {analysis.implications?.length > 0 && (
+                                <div className="mt-4 pl-8 space-y-2 border-l-2 border-primary/20 bg-primary/5 p-4 rounded-r-lg">
+                                    <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Key Implications</p>
+                                    {analysis.implications.map((imp, idx) => (
+                                        <p key={idx} className="text-sm text-foreground/80 leading-relaxed">• {imp}</p>
+                                    ))}
                                 </div>
-                            ))}
+                            )}
                         </div>
                     </div>
 
@@ -123,14 +128,28 @@ export default async function NewsDetailPage({ params }: PageProps) {
                         </figcaption>
                     </figure>
 
-                    {/* 3. Deep Dive Content */}
+                    {/* 3. Deep Dive Content - MOVED TO BOTTOM & Enhanced Typography */}
                     <div className="prose prose-lg dark:prose-invert max-w-none">
-                        <h3 className="flex items-center text-xl font-bold border-l-4 border-primary pl-4 mb-6">
-                            심층 분석 리포트
-                        </h3>
-                        {/* Markdown Content Rendering would go here, providing simple text for now */}
-                        <div className="prose prose-lg dark:prose-invert max-w-none text-muted-foreground">
-                            <ReactMarkdown>{analysis.content}</ReactMarkdown>
+                        <div className="flex items-center mb-6">
+                            <div className="h-8 w-1 bg-primary mr-4 rounded-full"></div>
+                            <h3 className="text-2xl font-bold font-serif text-foreground m-0">
+                                심층 분석 리포트
+                            </h3>
+                        </div>
+
+                        <div className="prose-headings:font-bold prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-4 prose-p:leading-8 prose-p:mb-6 text-muted-foreground/90">
+                            <ReactMarkdown
+                                components={{
+                                    // Custom renderer to ensure newlines are respected if needed, though standard MD handles paragraphs.
+                                    // Ensure H3s have distinct style
+                                    h3: ({ node, ...props }) => <h3 className="text-xl font-semibold text-primary mt-8 mb-4 border-b border-border/50 pb-2" {...props} />,
+                                    // Ensure lists are properly spaced
+                                    ul: ({ node, ...props }) => <ul className="list-disc pl-6 space-y-2 my-4" {...props} />,
+                                    li: ({ node, ...props }) => <li className="pl-1" {...props} />,
+                                }}
+                            >
+                                {analysis.content}
+                            </ReactMarkdown>
                         </div>
                     </div>
                 </section>
