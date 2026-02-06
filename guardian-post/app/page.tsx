@@ -20,7 +20,7 @@ export default async function Home() {
       <LiveTicker />
 
       {/* Header Section */}
-      <section className="container max-w-screen-2xl px-4 md:px-8 pt-8 pb-4">
+      <section className="container max-w-screen-2xl mx-auto px-4 md:px-8 pt-8 pb-4">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between border-b border-border pb-6">
           <div>
             <h1 className="text-4xl md:text-6xl font-black tracking-tighter mb-2 font-serif">
@@ -42,12 +42,12 @@ export default async function Home() {
         </div>
       </section>
 
-      <main className="container max-w-screen-2xl px-4 md:px-8 py-8 space-y-16">
+      <main className="container max-w-screen-2xl mx-auto px-4 md:px-8 py-8 space-y-16">
 
         {/* 1. Hero Section (Top News) */}
         {heroNews && (
           <section className="relative group">
-            <Link href={heroNews.originalUrl} target="_blank" className="block relative aspect-[21/9] w-full overflow-hidden rounded-2xl">
+            <Link href={`/news/${heroNews.id}`} className="block relative aspect-[21/9] w-full overflow-hidden rounded-2xl">
               {heroNews.thumbnailUrl ? (
                 <Image
                   src={heroNews.thumbnailUrl}
@@ -96,6 +96,7 @@ export default async function Home() {
               <NewsCard
                 key={news.id}
                 {...news}
+                originalUrl={`/news/${news.id}`}
                 imageUrl={news.thumbnailUrl}
                 category={news.keywords?.[0]}
                 date={format(new Date(news.publishedAt), 'MMM dd, yyyy')}
@@ -115,6 +116,7 @@ export default async function Home() {
               <NewsCard
                 key={news.id}
                 {...news}
+                originalUrl={`/news/${news.id}`}
                 imageUrl={news.thumbnailUrl}
                 category="News"
                 date={format(new Date(news.publishedAt), 'yyyy-MM-dd')}
@@ -125,7 +127,7 @@ export default async function Home() {
       </main>
 
       <footer className="border-t py-12 bg-muted/30">
-        <div className="container max-w-screen-2xl px-4 text-center text-muted-foreground text-sm">
+        <div className="container max-w-screen-2xl mx-auto px-4 text-center text-muted-foreground text-sm">
           <p>&copy; 2026 Guardian Post. All rights reserved.</p>
         </div>
       </footer>

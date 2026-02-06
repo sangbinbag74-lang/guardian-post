@@ -19,7 +19,7 @@ interface NewsCardProps {
 
 export function NewsCard({ title, summary, source, date, imageUrl, originalUrl, category }: NewsCardProps) {
     return (
-        <Link href={originalUrl} target="_blank" rel="noopener noreferrer" className="block h-full">
+        <Link href={originalUrl} className="block h-full">
             <motion.div
                 whileHover={{ y: -5 }}
                 transition={{ type: "spring", stiffness: 300 }}

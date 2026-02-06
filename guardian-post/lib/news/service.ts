@@ -74,23 +74,45 @@ export async function getNewsList(): Promise<NewsItem[]> {
   }
 }
 
+// Fallback Image Map (고화질 Unsplash 이미지)
+const FALLBACK_IMAGES: Record<string, string> = {
+  "Defense": "https://images.unsplash.com/photo-1518599806967-73598d1a1265?auto=format&fit=crop&q=80&w=800", // Tank/Military
+  "Drone": "https://images.unsplash.com/photo-1473968512647-3e447244af8f?auto=format&fit=crop&q=80&w=800", // Drone
+  "AI": "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=800", // AI Abstract
+  "Food": "https://images.unsplash.com/photo-1606787366850-de6330128bfc?auto=format&fit=crop&q=80&w=800", // Food Industry
+  "City": "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?auto=format&fit=crop&q=80&w=800", // City
+  "Default": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&q=80&w=800" // Generic News
+};
+
 // 아이템 가공 헬퍼 함수
 function processFeedItem(item: any, keyword: string, region: string): NewsItem {
   const imgMatch = item.content?.match(/<img[^>]+src="([^">]+)"/);
   const pubDate = item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString();
 
+  // Fallback Image Selection Logic
+  let thumbnailUrl = imgMatch ? imgMatch[1] : undefined;
+
+  if (!thumbnailUrl) {
+    if (keyword.includes("드론") || keyword.includes("자율주행") || keyword.includes("UAV")) thumbnailUrl = FALLBACK_IMAGES["Drone"];
+    else if (keyword.includes("방산") || keyword.includes("국방") || keyword.includes("Defense")) thumbnailUrl = FALLBACK_IMAGES["Defense"];
+    else if (keyword.includes("AI") || keyword.includes("지능")) thumbnailUrl = FALLBACK_IMAGES["AI"];
+    else if (keyword.includes("식품") || keyword.includes("푸드")) thumbnailUrl = FALLBACK_IMAGES["Food"];
+    else if (keyword.includes("익산") || keyword.includes("도시")) thumbnailUrl = FALLBACK_IMAGES["City"];
+    else thumbnailUrl = FALLBACK_IMAGES["Default"];
+  }
+
   return {
     id: item.guid || item.link || Math.random().toString(),
     title: item.title || "No Title",
     summary: item.contentSnippet?.slice(0, 150) + "..." || "No Summary",
-    originalUrl: item.link || "#",
+    originalUrl: item.link || "#", // Link is kept for reference, but UI might override to internal view
     source: `[${region}] ${item.creator || item.source?.title || "Google News"}`,
     publishedAt: pubDate,
     collectedAt: new Date().toISOString(),
     status: 'pending',
     reliability: 0,
     keywords: [keyword], // Tag with search keyword
-    thumbnailUrl: imgMatch ? imgMatch[1] : undefined,
+    thumbnailUrl: thumbnailUrl,
     category: keyword.includes("Defense") || keyword.includes("방산") ? "defense" : "tech"
   } as NewsItem;
 }
