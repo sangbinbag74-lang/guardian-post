@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { LayoutDashboard, Newspaper, Settings, LogOut, Shield } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { logout } from "@/lib/auth-actions"
 
 export default function AdminLayout({
     children,
