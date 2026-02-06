@@ -89,37 +89,34 @@ function processFeedItem(item: any, keyword: string, region: string): NewsItem {
   const imgMatch = item.content?.match(/<img[^>]+src="([^">]+)"/);
   const pubDate = item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString();
 
-  // Fallback Image Selection Logic
-  let thumbnailUrl = imgMatch ? imgMatch[1] : undefined;
+  // Fallback Image Selection Logic (High Quality Priority)
+  // We prioritize high-quality Unsplash images based on keywords to ensure premium look.
+  let thumbnailUrl = undefined;
 
-  if (!thumbnailUrl) {
-    if (keyword.includes("드론") || keyword.includes("자율주행") || keyword.includes("UAV")) thumbnailUrl = FALLBACK_IMAGES["Drone"];
-    else if (keyword.includes("방산") || keyword.includes("국방") || keyword.includes("Defense")) thumbnailUrl = FALLBACK_IMAGES["Defense"];
-    else if (keyword.includes("AI") || keyword.includes("지능")) thumbnailUrl = FALLBACK_IMAGES["AI"];
-    else if (keyword.includes("식품") || keyword.includes("푸드")) thumbnailUrl = FALLBACK_IMAGES["Food"];
-    else if (keyword.includes("익산") || keyword.includes("도시")) thumbnailUrl = FALLBACK_IMAGES["City"];
-    else thumbnailUrl = FALLBACK_IMAGES["Default"];
-  }
+  if (keyword.includes("드론") || keyword.includes("자율주행") || keyword.includes("UAV")) thumbnailUrl = FALLBACK_IMAGES["Drone"];
+  else if (keyword.includes("방산") || keyword.includes("국방") || keyword.includes("Defense") || keyword.includes("K-방산")) thumbnailUrl = FALLBACK_IMAGES["Defense"];
+  else if (keyword.includes("AI") || keyword.includes("지능")) thumbnailUrl = FALLBACK_IMAGES["AI"];
+  else if (keyword.includes("식품") || keyword.includes("푸드") || keyword.includes("클러스터")) thumbnailUrl = FALLBACK_IMAGES["Food"];
+  else if (keyword.includes("익산") || keyword.includes("도시") || keyword.includes("지자체")) thumbnailUrl = FALLBACK_IMAGES["City"];
+  else thumbnailUrl = imgMatch ? imgMatch[1] : FALLBACK_IMAGES["Default"]; // Only use RSS image if no keyword match
 
   return {
     id: item.guid || item.link || Math.random().toString(),
     title: item.title || "No Title",
     summary: item.contentSnippet?.slice(0, 150) + "..." || "No Summary",
-    originalUrl: item.link || "#", // Link is kept for reference, but UI might override to internal view
+    originalUrl: item.link || "#",
     source: `[${region}] ${item.creator || item.source?.title || "Google News"}`,
     publishedAt: pubDate,
     collectedAt: new Date().toISOString(),
     status: 'pending',
     reliability: 0,
-    keywords: [keyword], // Tag with search keyword
+    keywords: [keyword],
     thumbnailUrl: thumbnailUrl,
     category: keyword.includes("Defense") || keyword.includes("방산") ? "defense" : "tech"
   } as NewsItem;
 }
 
 export async function getNewsStats(): Promise<NewsStats> {
-  // 실시간 수집 특성상 누적 통계는 DB 연동 전까지는 0으로 표시하여
-  // 사용자가 '실시간 데이터임'을 인지하게 함
   return {
     totalCollected: 0,
     analyzing: 0,
