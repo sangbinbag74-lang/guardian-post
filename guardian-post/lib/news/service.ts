@@ -92,8 +92,20 @@ export async function getNewsList(): Promise<NewsItem[]> {
           item.summary = cached.summary; // Replace English Summary with Korean AI Summary
         }
       });
+
+      // [Filtering] Show ONLY Analyzed News
+      // User request: "Don't show me 'Analyzing...' screen. Only show completed news."
+      // Since we put a 4s timeout fallback, technically "filtering" might be redundant BUT
+      // this ensures absolute safety against any non-cached items slipping through.
+      const analyzedNews = sortedNews.filter(item => {
+        const cached = aiJournalist.getCachedResult(item.id);
+        return cached !== undefined;
+      });
+
+      return analyzedNews;
     }
 
+    // If no news, return empty
     return sortedNews;
 
   } catch (error) {

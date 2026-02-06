@@ -140,12 +140,25 @@ export default async function NewsDetailPage({ params }: PageProps) {
                         <div className="prose-headings:font-bold prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-4 prose-p:leading-8 prose-p:mb-6 text-muted-foreground/90">
                             <ReactMarkdown
                                 components={{
-                                    // Custom renderer to ensure newlines are respected if needed, though standard MD handles paragraphs.
-                                    // Ensure H3s have distinct style
-                                    h3: ({ node, ...props }) => <h3 className="text-xl font-semibold text-primary mt-8 mb-4 border-b border-border/50 pb-2" {...props} />,
-                                    // Ensure lists are properly spaced
-                                    ul: ({ node, ...props }) => <ul className="list-disc pl-6 space-y-2 my-4" {...props} />,
-                                    li: ({ node, ...props }) => <li className="pl-1" {...props} />,
+                                    // Header Styling: High contrast, larger font
+                                    h3: ({ node, ...props }) => (
+                                        <h3 className="text-2xl font-extrabold text-foreground mt-10 mb-5 border-l-4 border-primary pl-4" {...props} />
+                                    ),
+                                    // Bold Styling: Remove ** and apply visual weight
+                                    strong: ({ node, ...props }) => (
+                                        <strong className="font-extrabold text-primary/90" {...props} />
+                                    ),
+                                    // List Styling
+                                    ul: ({ node, ...props }) => (
+                                        <ul className="list-disc pl-6 space-y-3 my-6 text-foreground/90" {...props} />
+                                    ),
+                                    li: ({ node, ...props }) => (
+                                        <li className="pl-2 leading-relaxed" {...props} />
+                                    ),
+                                    // Paragraph Styling
+                                    p: ({ node, ...props }) => (
+                                        <p className="leading-8 mb-6 text-lg text-muted-foreground/90 whitespace-pre-wrap" {...props} />
+                                    ),
                                 }}
                             >
                                 {analysis.content}
